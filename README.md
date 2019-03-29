@@ -4,7 +4,7 @@ Automate workflows, config push, backups, handling of the network dynamics inclu
 
 ## Getting Started
 
-This project has few python scripts for now:
+This project has few ansible playbooks for now:
 1. Copy image file to tftp server and then to network devices
 2. Push configuration to devices from config file
 3. Back up configuration from devices
