@@ -1,0 +1,41 @@
+---
+- name: Push configuration on Alpha devices
+  hosts: sj01
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Create ACL
+      ios_config:
+        authorize: yes
+        lines:
+          - ip access-list extended PERMIT-APs-TO-JOIN-ECA
+          -  permit udp any host 10.41.54.161 eq 5246
+          -  permit udp any host 10.41.54.161 eq 5247
+          -  deny   udp any any eq 5246
+          -  deny   udp any any eq 5247
+          -  permit udp any any
+          -  permit ip any any
+        save_when: modified
+      register: print_output
+    - debug: var=print_output
+
+    - name: Apply ACL to vlan 1033
+      ios_config:
+        authorize: yes
+        parents: "interface vlan1033"
+        lines:
+          -  ip access-group PERMIT-APs-TO-JOIN-ECA in
+        save_when: modified
+      register: print_output
+    - debug: var=print_output
+
+# Description:
+# Use the ios commands module to create ACL
+# Apply ACL to interface
+# Save the config
+# http://docs.ansible.com/ansible/latest/ios_command_module.html
+
+# Commands to run:
+# ansible-playbook configpush-playbook.yml -u username -k
+

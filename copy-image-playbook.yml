@@ -1,0 +1,49 @@
+---
+- name: COPY IMAGE TO TFTP SERVER
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars_prompt:
+   - name: "ios_bin_path"
+     prompt: "What is the new IOS file location? (/path/filename) "
+     private: no
+
+  tasks:
+    - name: COPYING IMAGE TO TFTP SERVER
+      shell: sshpass -p {{ ansible_ssh_pass }} scp rdeshmu2@atc-view1-new:{{ ios_bin_path }} /tftpboot/
+      register: scp
+    - debug: var=scp.stdout_lines
+
+    - name: EXTRACTING FILENAME
+      set_fact:
+        imagename: "{{ ios_bin_path | regex_search('(cat[39]k_.+.bin)') }}"
+    - debug: var=imagename
+
+    - name: CHANGING PERMISSIONS
+      file:
+        path: /tftpboot/{{ imagename }}
+        mode: "u=rwx,g=rx,o=rx"
+
+
+- name: COPY IMAGE TO DEVICES
+  hosts: sj01
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: COPYING IMAGE TO DEVICES
+      ios_command:
+        provider:
+          timeout: 6000
+        commands:
+          - command: "copy tftp://10.34.138.55/{{ hostvars['localhost']['imagename'] }} flash:"
+            prompt: "[{{ hostvars['localhost']['imagename'] }}]"
+            answer: "\r"
+
+      register: print_output
+    - debug: var=print_output.stdout_lines
+
+
+#Description:
+#run: ansible-playbook test.yml -u username -k
